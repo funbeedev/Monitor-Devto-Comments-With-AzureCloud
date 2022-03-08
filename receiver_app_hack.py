@@ -13,6 +13,13 @@ import uuid
 from azure.iot.device.aio import IoTHubDeviceClient
 from azure.iot.device import Message
 
+try:
+    # setup gpio if this is a pi
+    from gpiozero import LED
+    led = LED("GPIO23")
+except:
+    None
+
 # TODO: try not to use globals..
 
 # this will store data received in callbacks
@@ -139,6 +146,18 @@ async def send_to_azure(device_client, msg):
     print(f"\nSending Device -> Cloud:\n {msg}")
 
 
+def run_blink_led(state):
+
+    if(is_pi == 'yes'):
+        if(state == 'ON'):
+            print("New Comment. Blink LED on pi!!!!")
+            led.on()
+        else:
+            led.off()
+    else:
+        print("New Comment. But device has no LED to blink...")
+
+
 def start_program_flow():
 
     # to hold messages received over mqtt
@@ -165,13 +184,15 @@ def start_program_flow():
         if(data_received != [] and last_data_received != data_received):
             last_data_received = data_received
 
-            # read out text
-            text_to_speech(data_received)
+            run_blink_led('ON')  # blink LED
+            text_to_speech(data_received)  # read out text
+            run_blink_led('OFF')
+
             # send message to azure
             asyncio.run(send_to_azure(azure_client, data_received))
         
-            if(is_pi == 'yes'):
-                print("Do something cool with pi!!!!")
+            
+
 
 
 
