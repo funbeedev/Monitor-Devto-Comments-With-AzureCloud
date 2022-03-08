@@ -43,8 +43,9 @@ def dev_api_request():
     with open('json.json') as f:
         response_json = json.load(f)
 
-    print(f"number of fields in json / comment blocks: {len(response_json)}")
-    print(f"number of keys in each dict: {len(response_json[0])}")
+    print(f"Number of comment blocks: {len(response_json)}")
+    # print(f"number of keys in each dict: {len(response_json[0])}")
+    print("Username of all commenters:")
 
     # list to store everyone who commented
     commenters_usernames = []
@@ -179,7 +180,7 @@ def run_messaging(commenters_usernames, commenters_comments_text):
         time.sleep(3)
 
         # build up msg to publish
-        msg_publish = " username: " + commenters_usernames[0] + " ," + " comment: " + commenters_comments_text[0]
+        msg_publish = " New comment by username: " + commenters_usernames[0] + ". ||| " + " comment: " + commenters_comments_text[0]
 
         # publish message to device only if there's new data
         if(msg_publish != last_msg_publish):

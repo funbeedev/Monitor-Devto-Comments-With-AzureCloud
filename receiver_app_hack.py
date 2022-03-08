@@ -53,7 +53,7 @@ pub_topic_1 = config.get('config_device', 'pub_topic_1')
 # print(f'Azure string: {azure_device_conn_string}')
 
 
-def text_to_speech(text):
+def text_to_speech(text="Start device app!"):
 
     # read text out loud
     engine = pyttsx3.init()
@@ -168,6 +168,8 @@ def run_blink_led(state):
 
 def start_program_flow():
 
+    text_to_speech()
+
     # to hold messages received
     global data_received
     last_data_received = []
@@ -196,6 +198,7 @@ def start_program_flow():
             run_blink_led('ON')  # blink LED
             text_to_speech(data_received)  # read out text
             run_blink_led('OFF')
+            print("Waiting for Cloud Messages...")
 
             # send message received back to azure
             # asyncio.run(send_to_azure(azure_client, data_received))
