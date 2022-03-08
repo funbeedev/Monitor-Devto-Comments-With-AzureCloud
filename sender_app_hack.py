@@ -8,6 +8,9 @@ import time
 import json
 from azure.iot.hub import IoTHubRegistryManager
 
+
+print("\n--------- start cloud app ---------\n")
+
 # TODO: dont use globals
 
 config_file = 'config_cloud.ini'
@@ -26,7 +29,7 @@ sub_topic_1 = config.get('config_cloud', 'sub_topic_1')
 sub_topic_2 = config.get('config_cloud', 'sub_topic_2')
 pub_topic_1 = config.get('config_cloud', 'pub_topic_1')
 
-print(f'conn_type: {conn_type} | broker: {mqtt_broker}  | sub_topic_1: {sub_topic_1} | sub_topic_2: {sub_topic_2} | pub_topic_1: {pub_topic_1}')
+# print(f'conn_type: {conn_type} | broker: {mqtt_broker}  | sub_topic_1: {sub_topic_1} | sub_topic_2: {sub_topic_2} | pub_topic_1: {pub_topic_1}')
 
 
 def dev_api_request():
@@ -36,9 +39,9 @@ def dev_api_request():
     # convert response to json format
     response_json = response.json()
 
-    # # use dummy json from file for testing
-    # with open('json.json') as f:
-    #     response_json = json.load(f)
+    # use dummy json from file for testing
+    with open('json.json') as f:
+        response_json = json.load(f)
 
     print(f"number of fields in json / comment blocks: {len(response_json)}")
     print(f"number of keys in each dict: {len(response_json[0])}")
@@ -99,16 +102,12 @@ def html_to_text(commenters_usernames, commenters_comments):
     return commenters_comments_text
 
 
-def text_to_speech(text):
+def text_to_speech(text="Start cloud app!"):
 
     # read text out loud
     engine = pyttsx3.init()
-    engine.say("Start sender app!")
+    engine.say(text)
     engine.runAndWait()
-
-    # engine.say(text)
-    # engine.runAndWait()
-
 
 
 # Called when client is connected to server
@@ -165,7 +164,7 @@ def send_iothub_to_device(data):
     props={}
     registry_manager.send_c2d_message(device_id, data, properties=props)
 
-    input("Press Enter to continue...\n")
+    # input("Press Enter to continue...\n")
 
 
 def run_messaging(commenters_usernames, commenters_comments_text):
@@ -188,20 +187,14 @@ def run_messaging(commenters_usernames, commenters_comments_text):
 
             print(f"Publish latest comment: {msg_publish}")
 
-            # publish to topic
-            client.publish(pub_topic_1, msg_publish)
-
-            # -> sending a burst of data at once
-            # for x in range(len(commenters_usernames)):
-            #     # build up msg to publish
-            #     msg_publish = str(x+1) + " username: " + commenters_usernames[x] + " comment: " + commenters_comments_text[x]
-            #     # publish to topic
-            #     client.publish(publish_topic, msg_publish)
+            if(conn_type == 'mqtt'):
+                # publish to topic
+                client.publish(pub_topic_1, msg_publish)
 
             # also send message directly to cloud if configured
             if(conn_type == 'cloud2device'):
                 send_iothub_to_device(msg_publish)
-                None
+
         else:
             print("No change to Comments")
 
@@ -215,10 +208,9 @@ def start_program_flow():
 
     commenters_usernames, commenters_comments = dev_api_request()
     commenters_comments_text = html_to_text(commenters_usernames, commenters_comments)
-    text_to_speech(commenters_comments_text)
+    text_to_speech()
     run_messaging(commenters_usernames, commenters_comments_text)
 
 
 if __name__ == "__main__":
-    print("--------- start sender app ---------")
     start_program_flow()

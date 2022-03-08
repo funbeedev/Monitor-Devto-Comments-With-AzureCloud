@@ -20,11 +20,13 @@ try:
 except:
     None
 
+print("\n--------- start device app ---------\n")
+
 # TODO: try not to use globals..
 
 # this will store data received in callbacks
 data_received = []  
-cloud_data_received = ''
+cloud_data_received = []
 
 # hold number of total msgs received from azure
 azure_msgs_count = 0
@@ -38,6 +40,7 @@ config = ConfigParser()
 config.read(config_file)
 
 # get all settings from config file
+conn_type = config.get('config_device', 'conn_type')
 azure_device_conn_string = config.get('config_device', 'azure_device_conn_string')
 is_pi = config.get('config_device', 'is_pi')
 mqtt_broker = config.get('config_device', 'mqtt_broker')
@@ -46,8 +49,8 @@ sub_topic_2 = config.get('config_device', 'sub_topic_2')
 pub_topic_1 = config.get('config_device', 'pub_topic_1')
 
 
-print(f'is_pi: {is_pi} | broker: {mqtt_broker}  | sub_topic_1: {sub_topic_1} | sub_topic_2: {sub_topic_2} | pub_topic_1: {pub_topic_1}')
-print(f'Azure string: {azure_device_conn_string}')
+# print(f'conn_type: {conn_type} | is_pi: {is_pi} | broker: {mqtt_broker}  | sub_topic_1: {sub_topic_1} | sub_topic_2: {sub_topic_2} | pub_topic_1: {pub_topic_1}')
+# print(f'Azure string: {azure_device_conn_string}')
 
 
 def text_to_speech(text):
@@ -106,6 +109,7 @@ def mqtt_setup(broker, topic_1, topic_2):
 def azure_message_handler(message):
     global azure_msgs_count
     global cloud_data_received
+    global data_received
 
     azure_msgs_count += 1
     print("\nMessage received from Cloud:")
@@ -115,6 +119,10 @@ def azure_message_handler(message):
         print ("    {}".format(property))
 
     cloud_data_received = message.data.decode()
+    # if not using mqtt then overwrite var used to hold what would have been sent over mqtt
+    if(conn_type != 'mqtt'):
+        data_received = message.data.decode()
+
     print(f"Data only: {cloud_data_received}")
     print("Total calls received: {}".format(azure_msgs_count))
 
@@ -160,13 +168,14 @@ def run_blink_led(state):
 
 def start_program_flow():
 
-    # to hold messages received over mqtt
+    # to hold messages received
     global data_received
     last_data_received = []
 
-    # setup mqtt conn to broker and topics
-    mqtt_client = mqtt_setup(mqtt_broker, sub_topic_1, sub_topic_2)
-    mqtt_client.loop_start()
+    if(conn_type == 'mqtt'):
+        # setup mqtt conn to broker and topics
+        mqtt_client = mqtt_setup(mqtt_broker, sub_topic_1, sub_topic_2)
+        mqtt_client.loop_start()
 
     # create instance of the device client using azure connection string
     azure_client = IoTHubDeviceClient.create_from_connection_string(azure_device_conn_string)
@@ -188,14 +197,9 @@ def start_program_flow():
             text_to_speech(data_received)  # read out text
             run_blink_led('OFF')
 
-            # send message to azure
-            asyncio.run(send_to_azure(azure_client, data_received))
+            # send message received back to azure
+            # asyncio.run(send_to_azure(azure_client, data_received))
         
-            
-
-
-
 
 if __name__ == "__main__":
-    print("--------- start receive app ---------")
     start_program_flow()
