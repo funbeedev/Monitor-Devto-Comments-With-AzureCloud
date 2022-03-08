@@ -15,8 +15,9 @@ from azure.iot.device import Message
 
 # TODO: try not to use globals..
 
-# this will store data received in mqtt callback
+# this will store data received in callbacks
 data_received = []  
+cloud_data_received = ''
 
 # hold number of total msgs received from azure
 azure_msgs_count = 0
@@ -97,14 +98,17 @@ def mqtt_setup(broker, topic_1, topic_2):
 
 def azure_message_handler(message):
     global azure_msgs_count
+    global cloud_data_received
+
     azure_msgs_count += 1
-    print("")
-    print("Message received:")
+    print("\nMessage received from Cloud:")
 
     # print data from both system and application (custom) properties
     for property in vars(message).items():
         print ("    {}".format(property))
 
+    cloud_data_received = message.data.decode()
+    print(f"Data only: {cloud_data_received}")
     print("Total calls received: {}".format(azure_msgs_count))
 
 
@@ -132,7 +136,7 @@ async def send_to_azure(device_client, msg):
         msg = Message(str(datetime.now()) + " |" + msg[0])
 
     await device_client.send_message(msg)
-    print(f"Message device to azure: {msg}")
+    print(f"\nSending Device -> Cloud:\n {msg}")
 
 
 def start_program_flow():
