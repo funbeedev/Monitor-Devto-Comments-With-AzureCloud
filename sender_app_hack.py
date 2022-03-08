@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 import requests
 from bs4 import BeautifulSoup
 import pyttsx3
@@ -6,8 +7,26 @@ from datetime import datetime
 import time
 import json
 
+# TODO: dont use globals
+
+config_file = 'config_cloud.ini'
+
+# config file contains user settings
+config = ConfigParser()
+config.read(config_file)
+
+# get all settings from config file
+conn_type = config.get('config_cloud', 'conn_type')
+mqtt_broker = config.get('config_cloud', 'mqtt_broker')
+sub_topic_1 = config.get('config_cloud', 'sub_topic_1')
+sub_topic_2 = config.get('config_cloud', 'sub_topic_2')
+pub_topic_1 = config.get('config_cloud', 'pub_topic_1')
+
+print(f'conn_type: {conn_type} | broker: {mqtt_broker}  | sub_topic_1: {sub_topic_1} | sub_topic_2: {sub_topic_2} | pub_topic_1: {pub_topic_1}')
+
 
 def dev_api_request():
+    
 
     # use dummy json from file for testing
     with open('json.json') as f:
@@ -57,7 +76,8 @@ def html_to_text(commenters_usernames, commenters_comments):
 
     # converts the html formatted content to text
     for x in range(len(commenters_comments)):
-        raw_html = BeautifulSoup(commenters_comments[x], features='lxml')
+        # raw_html = BeautifulSoup(commenters_comments[x], features='lxml')
+        raw_html = BeautifulSoup(commenters_comments[x])
         # print(raw_html.get_text())
         commenters_comments_text.append(raw_html.get_text())
 
@@ -85,9 +105,9 @@ def text_to_speech(text):
 # Called when client is connected to server
 def on_connect(client, userdata, flag, code):
     if code == 0:
-        print("Connected")
+        print("MQTT Connected")
     else:
-        print("Failed to Connect")
+        print("MQTT Failed to Connect")
     print(client, userdata, flag, code)
 
 
@@ -126,10 +146,13 @@ def mqtt_setup(broker, topic_1, topic_2):
     return client
 
 
+def send_iothub_to_device():
+    print("Sending directly from IoTHub to Device")
+
+
 def run_mqtt_messaging(commenters_usernames, commenters_comments_text):
     # setup mqtt conn to broker and topics
-    client = mqtt_setup('raspberrypi', 'none', 'none')
-    publish_topic = 'message'
+    client = mqtt_setup(mqtt_broker, sub_topic_1, sub_topic_2)
 
     # commenters_comments_text = '123456789'  # dummy
 
@@ -145,7 +168,7 @@ def run_mqtt_messaging(commenters_usernames, commenters_comments_text):
         print(f"Publish latest comment: {msg_publish}")
 
         # publish to topic
-        client.publish(publish_topic, msg_publish)
+        client.publish(pub_topic_1, msg_publish)
 
         # -> sending a burst of data at once
         # for x in range(len(commenters_usernames)):
@@ -153,6 +176,10 @@ def run_mqtt_messaging(commenters_usernames, commenters_comments_text):
         #     msg_publish = str(x+1) + " username: " + commenters_usernames[x] + " comment: " + commenters_comments_text[x]
         #     # publish to topic
         #     client.publish(publish_topic, msg_publish)
+
+        # also send message via sdk if stated
+        if(conn_type == 'c2d'):
+            send_iothub_to_device()
 
         # refresh dev api call to get latest comments
         print("--- REFRESH API ---")
