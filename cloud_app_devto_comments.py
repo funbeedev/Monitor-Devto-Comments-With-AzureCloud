@@ -39,9 +39,9 @@ def dev_api_request():
     # convert response to json format
     response_json = response.json()
 
-    # use dummy json from file for testing
-    with open('json.json') as f:
-        response_json = json.load(f)
+    # # use dummy json from file for testing
+    # with open('json.json') as f:
+    #     response_json = json.load(f)
 
     print(f"Number of comment blocks: {len(response_json)}")
     # print(f"number of keys in each dict: {len(response_json[0])}")
