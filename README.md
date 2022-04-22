@@ -1,6 +1,7 @@
 # Monitor-Devto-Comments-With-AzureCloud
 Be alerted of new comments on a [DEV.to](https://dev.to) article using the Azure Cloud ☁️
 
+![azurecloud-app-header-image](https://inspirezone.tech/wp-content/uploads/2022/04/AzureCloud-Devto-comment-alerts-1280x640-1.png)
 ## About
 Consists of an application running on the Azure Cloud and another on a device to detect new messages posted on a DEV.to article and alert you by reading out the comment. If the device is a PI, LED will indicate new comments.
 
